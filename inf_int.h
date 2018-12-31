@@ -74,12 +74,22 @@ public:
 			i++;
 			length++;
 		}
+		digit[length] = '\0';
 
 		//.........to avoid headaches:
 		if (digit[0] == '+')
 		{
 			deleteFirstDigit();
 		}
+	}
+
+	void deleteFirstDigit()
+	{
+		string a(digit);
+		a.erase(0, 1);
+		string_copy(digit, a);
+		length--;
+		digit[length] = '\0';
 	}
 
 	inf_int(string num)
@@ -92,15 +102,16 @@ public:
 		objcount++;
 		id = objcount;
 
-		digit = new char[num.length()]; //why are 4 random characters created at the end of any new allocated digit[] ?
+		digit = new char[num.length()];
 		length = num.length();
 
 		int i = 0;
-		strcpy(digit, num.c_str()); //strcpy cleans up the random characters that materialised upon allocating a new char[]
+		string_copy(digit, num);
 
 		if (digit[0] == '+')
 		{
-			deleteFirstDigit();
+			num.erase(0, 1);
+			length = length - 1;
 		}
 
 	}
@@ -117,21 +128,28 @@ public:
 		{
 			s = s + other.digit[i];
 		}
-		strcpy(digit, s.c_str()); //EXCEPTION: access violation.
+
+		string_copy(digit, s);
+
+		//strcpy(digit, s.c_str()); //EXCEPTION: access violation. 
+		//potential problems:
+		//1)I'm trying to write to read-only memory
+		//(apparently a pointer is placed in read-only memory because it is a constant, so it can't be written on.)
+		//2)I'm passing a NULL for dest in strcpy() - the dest in this case is digit[]
+		//3)my dest doesn't have enough memory allocated for src
 	}
 
-	void deleteFirstDigit()
+	void string_copy(char *a, string s) //mock-up of strcpy()
 	{
-		string s;
-		int j = 1;
-		for (int i = 0; i < length-1; i++)
+		for (int i = 0; i < length; i++)
 		{
-			s = s + digit[j];
-			j++;
+			digit[i] = s[i];
 		}
-		strcpy(digit, s.c_str()); //strcpy() reallocates digit[] for me. Cool!
-		length = length - 1;
+		digit[length] = '\0';
+		
 	}
+
+	
 	void setValue(int v)
 	{
 		string value;
@@ -157,7 +175,7 @@ public:
 
 	void reassign_this(int len) //to help with the repeated reassignment I do in Specialadd() and SpecialSubtract()
 	{
-		//NOT TO BE USED WITH OBJECTS OTHER THAN *THIS
+		//NOT TO BE USED WITH OBJECT	S OTHER THAN *THIS
 		length = len;
 		delete[] digit; //again, error if I try to use this function in cleanup() because of delete[] digit here
 		digit = new char[length];
@@ -182,12 +200,12 @@ public:
 			int result = num1 + num2;
 			string sresult = to_string(result);
 			this->reassign_this(sresult.length());
-			strcpy(digit, sresult.c_str());
+			string_copy(digit, sresult);
 		}
 
 	}
 	
-	string subtract(inf_int& obj1, inf_int obj2)
+	string subtract(inf_int& obj1, inf_int& obj2)
 	{
 		string firstnum(obj1.digit);
 		string secondnum(obj2.digit);
@@ -232,11 +250,13 @@ public:
 
 		if (sign == 0 && temp.sign == 1) //if the calling object is negative and incoming object is positive
 		{
-			deleteFirstDigit(); //remove the calling object's minus sign
+			{
+				deleteFirstDigit();
+			}
 			int difference;
 
 			enum oneOfTwo { ob1, ob2 }; //meant to decrease overhead for repeatedly calling Bigger() in following conditional statements
-			oneOfTwo bigger = (Bigger(temp) == *this) ? ob1 : ob2;
+			oneOfTwo bigger = (Bigger(temp) == 0) ? ob1 : ob2;
 		
 			if (length == temp.length && digit[0] == temp.digit[0]) //they're the same length and same first number
 			{
@@ -250,7 +270,7 @@ public:
 				//we only call for Bigger when we have already tested for the
 				//possibility that the numbers are equal. Because Bigger() can not discover equality. It only discovers who's bigger
 					
-					if (Bigger(temp) == *this)
+					if (Bigger(temp) == 0)
 						bigger = ob1;
 					else
 						bigger = ob2;
@@ -297,13 +317,18 @@ public:
 		
 		else //if calling object is positive and incoming object is negative
 			{
-				temp.deleteFirstDigit(); //remove minus sign of incoming object
+				temp.deleteFirstDigit();
 				int difference;
 
 				enum oneOfTwo { ob1, ob2 }; 
-				oneOfTwo bigger = Bigger(temp) == *this ? ob1 : ob2;
+				/*oneOfTwo bigger;
+				if (Bigger(temp) == 0)
+					bigger = ob1;
+				else
+					bigger = ob2;*/
+				oneOfTwo bigger = Bigger(temp) == 0 ? ob1 : ob2;
 
-				if (temp.length == length && digit[0] == temp.digit[0]) //same length and same starting digit
+				if (temp.length == length && digit[0] == temp.digit[0]) //same length and same starting digit, ignore Bigger()'s results.
 				{
 					if (checkequality(*this,temp) == true) { 
 						//they are the same number
@@ -314,7 +339,7 @@ public:
 					}
 					else
 					{
-						if (Bigger(temp) == *this)
+						if (Bigger(temp) == 0)
 						{
 							bigger = ob1;
 						}
@@ -349,9 +374,7 @@ public:
 					}
 
 					string result = subtract(*this, temp);
-
-					/*this->reassign_this(result.length());*/
-					strcpy(digit, result.c_str()); //move the result to the digit array
+					string_copy(digit, result);
 
 				}
 		}
@@ -365,13 +388,16 @@ public:
 			SpecialSubtract(obj);
 			return 0; //do not resume the rest of the function
 		}
+#if 0
 		inf_int temp;
 		temp = obj;
 
 		if (temp.sign == 0 && sign == 0) //if they're negative, remove signs to deal with raw numbers
 		{
-			deleteFirstDigit();
-			temp.deleteFirstDigit();
+			string a(this->digit); //why I can do this: string class has a constructor that takes a NULL-terminated c-string
+			string b(temp.digit);
+			a.erase(0, 1);
+			b.erase(0, 1);
 		}
 		//then resume addition
 
@@ -436,6 +462,7 @@ public:
 			strcpy(digit, numb1.c_str());
 		}
 		return 1; //it worked correctly
+#endif
 	}
 
 	//-------------------otherwise, they are ignored.
@@ -519,7 +546,8 @@ public:
 		if (sign == 0) //negative
 		{
 			sign = 1; //make positive
-			deleteFirstDigit(); //delete the negative sign
+			string a(digit); //check whether the digit array that gets sent here is null-terminated.
+			a.erase(0, 1);
 		}
 		else
 		{
@@ -585,26 +613,29 @@ public:
 		
 	}
 
-	inf_int Bigger(const inf_int obj2)
+	bool Bigger(const inf_int& obj2) //return bool
 	{
-		inf_int temp1 = *this;
-		inf_int temp2 = obj2;
+		string a(digit);
+		string b(obj2.digit);
+			/*inf_int temp1 = *this;
+			inf_int temp2 = obj2;*/
 		int dif;
-		if (temp1.length > temp2.length) //if temp1 is bigger in length, it wins
+		if (/*temp1.length*/a.length() > /*temp2.length*/ b.length()) //if temp1 is bigger in length, it wins
 		{
-			return *this;
+			return 0; //temp1
 		}
+#if 0
 		else if (temp2.length > temp1.length) //if temp2 is bigger in length, it wins
 		{
-			return temp2;
+			return 1; //temp2
 		}
-		else if (temp1.digit[0]>temp2.digit[0]) //if they reach here, they must be equal. if temp1's first digit is bigger, it wins
+		else if (temp1.digit[0]>temp2.digit[0]) //if they reach here, they must be equal in length. if temp1's first digit is bigger, it wins
 		{
-			return temp1;
+			return 0; //temp1
 		}
 		else if(temp2.digit[0]>temp1.digit[0]) //otherwise if temp2's first digit is bigger, it wins
 		{
-			return temp2;
+			return 1; //temp2
 		}
 		else //otherwise we need to check every digit until we find the biggest of the two
 		{
@@ -614,17 +645,18 @@ public:
 			{
 				if (temp1.digit[i] > temp2.digit[i])
 				{
-					return temp1;
+					return 0;
 				}
 				else if (temp1.digit[i] == temp2.digit[i])
 					continue;
 				else
-					return temp2; 
+					return 1; 
 			}
 		}
+#endif
 	}
 
-	bool operator==(const inf_int obj)
+	bool operator==(const inf_int& obj)
 	{
 		if (this->length == obj.length && this->sign == obj.sign) //check the length and sign
 		{
@@ -650,7 +682,7 @@ public:
 		digit = new char[length]; 
 		string stemp;
 		into_string(other.digit, stemp, other.length);
-		strcpy(digit, stemp.c_str()); 
+		string_copy(digit, stemp);
 
 		return *this;
 	}
@@ -750,7 +782,10 @@ public:
 
 	~inf_int() //destructor
 	{
-		delete[] digit;
+		if (digit != nullptr) {
+			delete[] digit;
+		digit = nullptr;
+		}
 		objcount--;
 		id = objcount;
 	}
