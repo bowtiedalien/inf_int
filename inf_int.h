@@ -65,14 +65,13 @@ public:
 
 		numb = to_string(num); //convert the incoming integer into a string 
 
-		digit = new char[numb.length()];
-
+		digit = new char[numb.length()+1];
+		length = numb.length();
 		int i = 0;
 		while (numb[i] != '\0')
 		{
 			digit[i] = numb[i];
 			i++;
-			length++;
 		}
 		digit[length] = '\0';
 
@@ -102,7 +101,7 @@ public:
 		objcount++;
 		id = objcount;
 
-		digit = new char[num.length()];
+		digit = new char[num.length()+1]; //+1 : a place for null char
 		length = num.length();
 
 		int i = 0;
@@ -121,13 +120,9 @@ public:
 		objcount++;
 		id = objcount;
 		length = other.length; //update its length to the length of the object it is being assigned to
-		digit = new char[length];
+		digit = new char[length+1];
 		sign = other.sign;
-		string s="";
-		for (int i = 0; i < other.length; i++)
-		{
-			s = s + other.digit[i];
-		}
+		string s(other.digit);
 
 		string_copy(digit, s);
 
@@ -242,10 +237,10 @@ public:
 
 	//--------------------if number exceeds INT_MAX, these functions are used
 
+
 	void SpecialSubtract(const inf_int& obj)
 	{
-		inf_int temp = obj; //deep copy to operate with temp instead of untouchable parameter
-
+		inf_int temp = obj;
 		string result; //what subtract() returns
 
 		if (sign == 0 && temp.sign == 1) //if the calling object is negative and incoming object is positive
