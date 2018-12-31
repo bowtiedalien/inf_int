@@ -170,10 +170,10 @@ public:
 
 	void reassign_this(int len) //to help with the repeated reassignment I do in Specialadd() and SpecialSubtract()
 	{
-		//NOT TO BE USED WITH OBJECT	S OTHER THAN *THIS
+		//NOT TO BE USED WITH OBJECTS OTHER THAN *THIS
 		length = len;
 		delete[] digit; //again, error if I try to use this function in cleanup() because of delete[] digit here
-		digit = new char[length];
+		digit = new char[length+1]; //plus one for null character
 	}
 
 	void add(const inf_int& obj)
@@ -287,7 +287,7 @@ public:
 
 				result = subtract(*this, temp);
 
-				this->reassign_this(result.length() + 1); 
+				this->reassign_this(result.length() + 1); //plus one for negative sign
 				result = '-' + result;
 				strcpy(digit, result.c_str());
 			}
@@ -383,7 +383,6 @@ public:
 			SpecialSubtract(obj);
 			return 0; //do not resume the rest of the function
 		}
-#if 0
 		inf_int temp;
 		temp = obj;
 
@@ -457,7 +456,6 @@ public:
 			strcpy(digit, numb1.c_str());
 		}
 		return 1; //it worked correctly
-#endif
 	}
 
 	//-------------------otherwise, they are ignored.
@@ -610,16 +608,13 @@ public:
 
 	bool Bigger(const inf_int& obj2) //return bool
 	{
-		string a(digit);
-		string b(obj2.digit);
-			/*inf_int temp1 = *this;
-			inf_int temp2 = obj2;*/
+		inf_int temp1 = *this;
+		inf_int temp2 = obj2;
 		int dif;
-		if (/*temp1.length*/a.length() > /*temp2.length*/ b.length()) //if temp1 is bigger in length, it wins
+		if (temp1.length > temp2.length) //if temp1 is bigger in length, it wins
 		{
 			return 0; //temp1
 		}
-#if 0
 		else if (temp2.length > temp1.length) //if temp2 is bigger in length, it wins
 		{
 			return 1; //temp2
@@ -648,7 +643,7 @@ public:
 					return 1; 
 			}
 		}
-#endif
+
 	}
 
 	bool operator==(const inf_int& obj)
