@@ -51,4 +51,9 @@ Test Cases of SpecialAdd() and SpecialSubtract():
 	bigint3.print();
 ```
 8. num1 is smaller and negative, num2 is bigger and negative. (num2+num1)(ans = -ve)
-
+```C++
+	inf_int bigint3("-100000000003");
+	inf_int bigint4("-100000000009");
+	bigint3.add(bigint4);
+	bigint3.print();
+```
