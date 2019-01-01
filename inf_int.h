@@ -586,9 +586,8 @@ public:
 		length = other.length; //update its length to the length of the object it is being assigned to
 	
 		sign = other.sign; 
-		digit = new char[length]; 
-		string stemp;
-		into_string(other.digit, stemp, other.length);
+		digit = new char[length+1];  //place for null character
+		string stemp(other.digit);
 		string_copy(digit, stemp);
 
 		return *this;
@@ -626,8 +625,7 @@ public:
 	{
 		inf_int tmp;
 		tmp = *this; //returned in the end
-		string s = "";
-		into_string(digit, s, length); //copy values of digit into the string s
+		string s(digit);
 		reverse(s.begin(), s.end()); 
 
 		int increm = to_int(s[0]) + 1; //I'm adding 1 to the very last digit (i.e. first digit now)
@@ -655,15 +653,6 @@ public:
 		//temp.digit is destroyed by the end of this function. I don't have to do it manually.
 	}
 
-	void into_string(char* ar, string& s, int len) //to convert digit[] into a single string. Instead of using string's constructor,
-		//which would copy the garbage values present in my digit[] array. Using this function, no garbage values are copied. And I can
-		//maintain a clean digit[] array.
-	{
-		for (int i = 0; i < len; i++)
-		{
-			s = s + ar[i];
-		}
-	}
 	inf_int operator+(const inf_int& x) 
 	{
 		inf_int obj; //the sum of them
