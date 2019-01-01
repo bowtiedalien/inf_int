@@ -238,142 +238,59 @@ public:
 	//--------------------if number exceeds INT_MAX, these functions are used
 
 
-	void SpecialSubtract(const inf_int& obj)
+	int SpecialSubtract(const inf_int& obj)
 	{
 		inf_int temp = obj;
 		string result; //what subtract() returns
+		bool sign_carrier;
 
-		if (sign == 0 && temp.sign == 1) //if the calling object is negative and incoming object is positive
+		if (sign == 0) //if the calling object is negative
 		{
-			{
-				deleteFirstDigit();
-			}
-			int difference;
+			deleteFirstDigit();
+			sign_carrier = 0;
+		}
+		else { //if incoming object is negative
+			temp.deleteFirstDigit();
+			sign_carrier = 1;
+		}
 
-			enum oneOfTwo { ob1, ob2 }; //meant to decrease overhead for repeatedly calling Bigger() in following conditional statements
-			oneOfTwo bigger = (Bigger(temp) == 0) ? ob1 : ob2;
-		
-			if (length == temp.length && digit[0] == temp.digit[0]) //they're the same length and same first number
-			{
-				if (checkequality(*this, temp) == true) {
-					//they evaluate to zero
+		enum oneOfTwo { ob1, ob2 }; //meant to decrease overhead for repeatedly calling Bigger() in following conditional statements
+		oneOfTwo bigger;
 
-					this->reassign_this(1);
-					digit[0] = '0';
-				}
-				else { 
-				//we only call for Bigger when we have already tested for the
-				//possibility that the numbers are equal. Because Bigger() can not discover equality. It only discovers who's bigger
-					
-					if (Bigger(temp) == 0)
-						bigger = ob1;
-					else
-						bigger = ob2;
-				
-				}
+		if (length == temp.length) 
+		{
+			if (checkequality(*this, temp) == true) {
+				//they evaluate to zero
+				this->reassign_this(1);
+				digit[0] = '0';
+				return 0;
 			}
 
-			if (bigger==ob1)  //if first number is bigger
-			{
-				//we will do: calling object - incoming object
-				//result is negative
-				//expand temp
+		}
+		bigger = (Bigger(temp) == 0) ? ob1 : ob2;
 
-				if (length > temp.length) //if the length is different, expand the second object
-				{
-					difference = length - temp.length;
-					temp.expand(difference);
+			int difference = abs(length - temp.length);
+			if (bigger==ob2) {
+				expand(difference);
+				result = subtract(temp, *this);
+				if (sign_carrier == 1) {
+					reassign_this(result.length() + 1);
+					result = '-' + result;
 				}
-
-				result = subtract(*this, temp);
-
-				this->reassign_this(result.length() + 1); //plus one for negative sign
-				result = '-' + result;
+				reassign_this(result.length());
 				strcpy(digit, result.c_str());
 			}
-
-			else //second object is bigger
-			{
-				//incoming - calling
-				//result is positive
-
-				if (temp.length > length) { //if length is different, expand
-					difference = temp.length - length;
-					expand(difference);
+			else if (bigger == ob1) {
+				temp.expand(difference);
+				result = subtract(*this, temp);
+				if (sign_carrier == 0){
+					this->reassign_this(result.length() + 1);
+					result = '-' + result;
 				}
-
-				result = subtract(temp, *this);
-
-				this->reassign_this(result.length());
+				this->reassign_this(result.length()); //plus one for negative sign
 				strcpy(digit, result.c_str());
 			}
 			
-		}
-		
-		else //if calling object is positive and incoming object is negative
-			{
-				temp.deleteFirstDigit();
-				int difference;
-
-				enum oneOfTwo { ob1, ob2 }; 
-				/*oneOfTwo bigger;
-				if (Bigger(temp) == 0)
-					bigger = ob1;
-				else
-					bigger = ob2;*/
-				oneOfTwo bigger = Bigger(temp) == 0 ? ob1 : ob2;
-
-				if (temp.length == length && digit[0] == temp.digit[0]) //same length and same starting digit, ignore Bigger()'s results.
-				{
-					if (checkequality(*this,temp) == true) { 
-						//they are the same number
-						//their subtraction evaluates to zero
-
-						this->reassign_this(1); //reassign digit[] to length=1
-						digit[0] = '0';
-					}
-					else
-					{
-						if (Bigger(temp) == 0)
-						{
-							bigger = ob1;
-						}
-						else
-							bigger = ob2;
-					}
-				}
-
-				if (bigger == ob2) //if negative incoming is bigger: incoming - calling
-				{
-					//result is negative
-
-					if (temp.length > length) //if incoming is bigger IN LENGTH
-					{
-						difference = temp.length - length;
-						expand(difference);
-					}
-
-					string result = subtract(temp, *this); //take the string that subtract() returns
-
-					this->reassign_this(result.length() + 1);
-					result = '-' + result; //append the minus sign
-					strcpy(digit, result.c_str());
-				}
-
-				else //if positive calling object is bigger: calling - incoming
-				{
-					if (length > temp.length) //if *this is bigger IN LENGTH
-					{
-						difference = length - temp.length;
-						temp.expand(difference);
-					}
-
-					string result = subtract(*this, temp);
-					string_copy(digit, result);
-
-				}
-		}
-
 	}
 
 	int SpecialAdd(const inf_int& obj) //add an incoming object to a calling object 
@@ -487,7 +404,7 @@ public:
 		length = end;
 		/*this->reassign_this(length);*/ 
 		delete[] digit; //won't let me.
-		digit = new char[length];
+		digit = new char[length+1];
 		strcpy(digit, holder.c_str());
 
 	}
