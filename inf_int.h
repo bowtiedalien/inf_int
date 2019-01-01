@@ -7,6 +7,10 @@
 #define max_digits 9
 using namespace std;
 
+/*TO-DO:
+- overload extraction and insertion operators
+*/
+
 class inf_int
 {
 private:
@@ -198,7 +202,7 @@ public:
 			string_copy(digit, sresult);
 		}
 
-	}
+	} //called for small numbers
 	
 	string subtract(inf_int& obj1, inf_int& obj2)
 	{
@@ -234,6 +238,50 @@ public:
 		return result;
 		
 	}
+
+	string Add(inf_int& obj2) //called inside SpecialAdd()
+	{
+		string result(length, '0'); //create a string that is as long as the length initialised to all zeros
+		int carry = 0;
+		int add = 0; //to hold the result of the integer addition
+		int num1;
+		int num2;
+		string numb1(this->digit);
+		string numb2(obj2.digit);
+		reverse(numb1.begin(), numb1.end()); //flip the numbers
+		reverse(numb2.begin(), numb2.end());
+
+		for (int i = 0; i < length; i++)
+		{
+			if (numb1[i] == '\0')
+				break;
+			num1 = to_int(numb1[i]); //save current digits as ints
+			num2 = to_int(numb2[i]);
+
+			add = num1 + num2 + carry; //MAIN OPERATION
+
+			if (add > 9)
+			{
+				if (i == (length - 1)) //if it's the last digit
+				{
+					result[i] = to_char(add % 10); //take the second digit
+					add = add / 10; //the first digit (the overflow)
+					result = result + to_char(add); //concatenate the carry to the end of the string result
+				}
+				else
+				{
+					result[i] = to_char(add % 10); //take the second digit
+					add = add / 10;
+					carry = add; //save the overflow as carry
+				}
+			}
+			else {
+				result[i] = to_char(add); //save the addition as char to get ready for moving into digit[] array
+				carry = 0;
+			}
+		}
+		return result;
+	} 
 
 	//--------------------if number exceeds INT_MAX, these functions are used
 
@@ -293,8 +341,7 @@ public:
 			
 	}
 
-	int SpecialAdd(const inf_int& obj) //add an incoming object to a calling object 
-		//TESTED
+	int SpecialAdd(const inf_int& obj)
 	{
 		if (sign != obj.sign) {
 			SpecialSubtract(obj);
@@ -305,12 +352,8 @@ public:
 
 		if (temp.sign == 0 && sign == 0) //if they're negative, remove signs to deal with raw numbers
 		{
-			string a(this->digit); //why I can do this: string class has a constructor that takes a NULL-terminated c-string
-			string b(temp.digit);
-			a.erase(0, 1);
-			b.erase(0, 1);
-			strcpy(digit, a.c_str());
-			strcpy(temp.digit, b.c_str());
+			deleteFirstDigit();
+			temp.deleteFirstDigit();
 
 		}
 		//then resume addition
@@ -324,60 +367,18 @@ public:
 			else
 				this->expand(difference); //expand operation is performed on this object
 		}
-		string result(length,'0'); //create a string that is as long as the length initialised to all zeros
-		int carry = 0;
-		int add = 0; //to hold the result of the integer addition
-		int num1;
-		int num2;
-		string numb1(this->digit);
-		string numb2(temp.digit);
-		reverse(numb1.begin(),numb1.end()); //flip the numbers
-		reverse(numb2.begin(),numb2.end());
 
-		for (int i = 0; i<length; i++) 
-		{
-			if (numb1[i] == '\0')
-				break;
-			num1 = to_int(numb1[i]); //save current digits as ints
-			num2 = to_int(numb2[i]);
+		string result = Add(temp); //the complete addition process
 
-			add = num1 + num2 + carry; //MAIN OPERATION
+		reverse(result.begin(), result.end()); //reverse it back to original
+		if (sign == 0)
+			result = '-' + result; //negative result
+		length = result.length();
+		cleanup(result);
+		this->reassign_this(length);
+		strcpy(digit, result.c_str());
 
-			if (add > 9)
-			{
-				if (i == (length-1)) //if it's the last digit
-				{
-					result[i] = to_char(add % 10); //take the second digit
-					add = add / 10; //the first digit (the overflow)
-					result = result + to_char(add); //concatenate the carry to the end of the string result
-				}
-				else
-				{
-					result[i] = to_char(add % 10); //take the second digit
-					add = add / 10;
-					carry = add; //save the overflow as carry
-				}
-			}
-			else {
-				result[i] = to_char(add); //save the addition as char to get ready for moving into digit[] array
-				carry = 0;
-			}
-		}
-		if (sign == 1) { //if the result was supposed to be positive
-			numb1 = result; //copy the result into the first object's string
-			reverse(numb1.begin(), numb1.end()); //reverse it back to original
-			this->reassign_this(result.length());
-			strcpy(digit, numb1.c_str());
-		}
-		else { //if the numbers were both negative, the result will be negative too.
-			numb1 = result;
-			reverse(numb1.begin(), numb1.end()); //flip to original
-			numb1 = '-' + numb1; //negative result
-			cleanup(numb1);
-			this->reassign_this(numb1.length());
-			strcpy(digit, numb1.c_str());
-		}
-		return 1; //it worked correctly
+		return 1; 
 	}
 
 	//-------------------otherwise, they are ignored.
@@ -434,23 +435,19 @@ public:
 	}
 
 	bool checkequality(const inf_int& obj1, const inf_int& obj2) //checks if two objects are equal (does not consider signs)
-	{//RECHECKED
+	{
 		bool areEqual = true;
 
 		for (int i = 0; i < obj1.length; i++)
 		{
 			if (obj1.digit[i] != obj2.digit[i])
-			{
 				areEqual = false;
-			}
-
 		}
-
 		return areEqual;
 	}
 
 	void expand(int diff)
-	{//RECHECKED
+	{
 		string st;
 		for (int i = 0; i < length; i++)
 		{
@@ -677,7 +674,7 @@ public:
 		//temp.digit is destroyed by the end of this function. I don't have to do it manually.
 	}
 
-	inf_int operator+(const inf_int& x) 
+	inf_int operator+(const inf_int& x) //edit this to accept larger numbers
 	{
 		inf_int obj; //the sum of them
 		int num1 = stoi(digit);

@@ -57,3 +57,5 @@ Test Cases of SpecialAdd() and SpecialSubtract():
 	bigint3.add(bigint4);
 	bigint3.print();
 ```
+9. addition of two numbers with same length that results in result of length+1
+10. subtraction that results in 0
