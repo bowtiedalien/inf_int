@@ -309,6 +309,9 @@ public:
 			string b(temp.digit);
 			a.erase(0, 1);
 			b.erase(0, 1);
+			strcpy(digit, a.c_str());
+			strcpy(temp.digit, b.c_str());
+
 		}
 		//then resume addition
 
@@ -333,6 +336,8 @@ public:
 
 		for (int i = 0; i<length; i++) 
 		{
+			if (numb1[i] == '\0')
+				break;
 			num1 = to_int(numb1[i]); //save current digits as ints
 			num2 = to_int(numb2[i]);
 
@@ -368,7 +373,7 @@ public:
 			numb1 = result;
 			reverse(numb1.begin(), numb1.end()); //flip to original
 			numb1 = '-' + numb1; //negative result
-
+			cleanup(numb1);
 			this->reassign_this(numb1.length());
 			strcpy(digit, numb1.c_str());
 		}
@@ -378,7 +383,8 @@ public:
 	//-------------------otherwise, they are ignored.
 	
 	void cleanup() //removes zeros at the MSBs after subtraction
-	{//CHECKED
+	{//works for char[]
+
 		string holder(digit); //copy the char array into a string
 
 		int end = holder.length();
@@ -407,6 +413,24 @@ public:
 		digit = new char[length+1];
 		strcpy(digit, holder.c_str());
 
+	}
+
+	void cleanup(string& s) //cleans up a string result after addition from zeros at the MSBs
+	{
+		int i = 0;
+		while (s[i] != '\0')
+		{
+			if (s[i] == '-')
+				i++;
+			if (s[i] == '0')
+			{
+				s.erase(i, 1);
+				i--;
+			}
+			else
+				break;
+			i++;
+		}
 	}
 
 	bool checkequality(const inf_int& obj1, const inf_int& obj2) //checks if two objects are equal (does not consider signs)
